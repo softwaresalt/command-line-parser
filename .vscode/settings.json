@@ -1,18 +1,17 @@
-
 {
-    "files.exclude": {
-        "**/.git": true,
-        "**/.svn": true,
-        "**/.hg": true,
-        "**/CVS": true,
-        "**/.DS_Store": true,
-        "**/bin": true,
-        "**/obj": true
-    },
-    "cSpell.words": [
-        "Neumann",
-        "Xunit",
-        "paket",
-        "vvvcccaaa"
-    ]
+	"files.exclude": {
+		"**/.git": true,
+		"**/.svn": true,
+		"**/.hg": true,
+		"**/CVS": true,
+		"**/.DS_Store": true,
+		"**/bin": true,
+		"**/obj": true
+	},
+	"cSpell.words": [
+		"Neumann",
+		"Xunit",
+		"paket",
+		"vvvcccaaa"
+	]
 }

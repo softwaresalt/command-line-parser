@@ -1,8 +1,17 @@
-
 <Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-  </PropertyGroup>
-
+	<PropertyGroup>
+		<TargetFramework>netcoreapp3.1</TargetFramework>
+		<RepositoryUrl>https://github.com/softwaresalt/command-line-parser-core</RepositoryUrl>
+		<PackageReleaseNotes></PackageReleaseNotes>
+		<Description>Straight port of https://github.com/lecode-official/command-line-parser to .NET Core 3.1</Description>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<PackageTags>Command-Line cmd</PackageTags>
+		<PackageIcon>Logo32x32.png</PackageIcon>
+	</PropertyGroup>
+	<ItemGroup>
+	  <None Include="..\docs\images\Logo32x32.png">
+	    <Pack>True</Pack>
+	    <PackagePath></PackagePath>
+	  </None>
+	</ItemGroup>
 </Project>

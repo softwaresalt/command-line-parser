@@ -1,12 +1,11 @@
-
 #region Using Directives
 
 using System.Runtime.CompilerServices;
 
-#endregion
+#endregion Using Directives
 
 #region General Information
 
 [assembly: InternalsVisibleTo("System.CommandLine.Parser.Tests")]
 
-#endregion
+#endregion General Information
