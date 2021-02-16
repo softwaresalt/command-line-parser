@@ -25,16 +25,6 @@ dotnet build
 dotnet test ./test/System.CommandLine.Parser.Tests.csproj
 ```
 
-To reference in your own .NET Core project:
-
-
-```bash
-using System.CommandLine;
-
-Parser parser = new Parser();
-```
-
-
 ## Contributions
 
 I always greatly appreciate feedback and bug reports. To file a bug, please use GitHub's issue system.
