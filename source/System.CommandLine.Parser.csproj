@@ -7,9 +7,18 @@
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageTags>Command-Line cmd</PackageTags>
 		<PackageIcon>Logo32x32.png</PackageIcon>
+		<Company>Software.Salt</Company>
+		<Authors>Software.Salt</Authors>
+		<PackageId>Salt.System.CmdLineArgs.Parser.Core</PackageId>
+		<Product>Salt.System.CmdLineArgs.Parser.Core</Product>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 	</PropertyGroup>
 	<ItemGroup>
 	  <None Include="..\docs\images\Logo32x32.png">
+	    <Pack>True</Pack>
+	    <PackagePath></PackagePath>
+	  </None>
+	  <None Include="..\LICENSE">
 	    <Pack>True</Pack>
 	    <PackagePath></PackagePath>
 	  </None>

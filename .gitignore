@@ -2,3 +2,6 @@
 # Ignores the build outputs
 bin/
 obj/
+*.suo
+*.sqlite
+/.vs/CmdLineParserCore/DesignTimeBuild/.dtbcache.v2
