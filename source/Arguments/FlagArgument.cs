@@ -11,7 +11,7 @@ namespace System.CommandLine.Arguments
 	/// Represents a single flag argument of a command line parser. In contrast to named arguments, flag arguments, cannot be explicitly assigned a value, but rather get their value from their presence or absence.
 	/// </summary>
 	/// <typeparam name="T">
-	/// The type of the argument. May only be a boolean, integer, or enumeration type. When the type is boolean, then only the presence or absence of the flag is determined. If the type is an integer type (i.e. byte, sbyte,
+	/// The type of the argument may only be a boolean, integer, or enumeration type. When the type is boolean, then only the presence or absence of the flag is determined. If the type is an integer type (i.e. byte, sbyte,
 	/// short, ushort, int, uint, long, or ulong), then the number of occurrences is determined. But if the type is an enumeration type, then the number of occurrences is interpreted as the enumeration value. For example
 	/// consider the following enumeration type: <c>enum Severity { None = 0, Low = 1, Medium = 2, High = 3 }</c>, which is the type of the flag argument named "severity" with the alias "s", then the following command line
 	/// argument "-sss" would parse to an enumeration value of <c>Severity.High</c>.

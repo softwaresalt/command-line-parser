@@ -5,3 +5,4 @@ obj/
 *.suo
 *.sqlite
 /.vs/CmdLineParserCore/DesignTimeBuild/.dtbcache.v2
+/.vs/CmdLineParserCore/v16/TestStore/0

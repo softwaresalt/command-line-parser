@@ -781,32 +781,32 @@ namespace System.CommandLine.Tests
 
 			// Creates the parser for the add command
 			Parser addCommandParser = parser.AddCommand("add", "Add a new package or reference to a .NET project.");
-			addCommandParser.AddPositionalArgument<string>("project", "The project file to operate on.");
+			addCommandParser.AddPositionalArgument<string>("project", "The project file to operate on.", null);
 			addCommandParser.AddFlagArgument<bool>("help", "h", "Show command line help.");
 
 			// Creates the parser for the add package command
 			Parser addPackageCommandParser = addCommandParser.AddCommand("package", "Add a NuGet package reference to the project.");
-			addPackageCommandParser.AddPositionalArgument<string>("package-name", "The package reference to add.");
+			addPackageCommandParser.AddPositionalArgument<string>("package-name", "The package reference to add.", null);
 			addPackageCommandParser.AddFlagArgument<bool>("help", "h", "Show command line help.");
 			addPackageCommandParser.AddNamedArgument<string>("version", "v", "The version of the package to add.");
 			addPackageCommandParser.AddFlagArgument<bool>("interactive", null, "Show command line help.");
 
 			// Creates the parser for the add reference command
 			Parser addReferenceCommandParser = addCommandParser.AddCommand("reference", "Add a project-to-project reference to the project.");
-			addReferenceCommandParser.AddPositionalArgument<string>("project-path", "The paths to the projects to add as references.");
+			addReferenceCommandParser.AddPositionalArgument<string>("project-path", "The paths to the projects to add as references.", null);
 			addReferenceCommandParser.AddFlagArgument<bool>("help", "h", "Show command line help.");
 			addReferenceCommandParser.AddNamedArgument<string>("framework", "f", "Add the reference only when targeting a specific framework.");
 
 			// Creates the parser for the build command
 			Parser buildCommandParser = parser.AddCommand("build", "Add a new package or reference to a .NET project.");
-			buildCommandParser.AddPositionalArgument<string>("project", "The project file to operate on.");
+			buildCommandParser.AddPositionalArgument<string>("project", "The project file to operate on.", null);
 			buildCommandParser.AddFlagArgument<bool>("help", "h", "Show command line help.");
 			buildCommandParser.AddNamedArgument<VerbosityLevel>("verbosity", "v", "Set the MSBuild verbosity level. Allowed values are quiet, minimal, normal, detailed, and diagnostic.");
 			buildCommandParser.AddNamedArgument<string>("framework", "f", "The target framework to build for. The target framework must also be specified in the project file.");
 
 			// Creates the parser for the new command
 			Parser newCommandParser = parser.AddCommand("new", "Create a new .NET project or file.");
-			newCommandParser.AddPositionalArgument<string>("template", "The project template to use.");
+			newCommandParser.AddPositionalArgument<string>("template", "The project template to use.", null);
 			newCommandParser.AddFlagArgument<bool>("help", "h", "Show command line help.");
 			newCommandParser.AddNamedArgument<string>("name", "n", "The name for the output being created. If no name is specified, the name of the current directory is used.");
 			newCommandParser.AddNamedArgument<string>("output", "o", "Location to place the generated output.");
