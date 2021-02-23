@@ -12,6 +12,9 @@
 		<PackageId>Salt.System.CmdLineArgs.Parser.Core</PackageId>
 		<Product>Salt.System.CmdLineArgs.Parser.Core</Product>
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+		<AssemblyVersion>1.0.1.0</AssemblyVersion>
+		<FileVersion>1.0.1.0</FileVersion>
+		<Version>1.0.1</Version>
 	</PropertyGroup>
 	<ItemGroup>
 	  <None Include="..\docs\images\Logo32x32.png">

@@ -111,6 +111,12 @@ namespace System.CommandLine
 
 		#region Public Methods
 
+		public bool HasParsedValue(string destination)
+		{
+			bool hasKey = this.ParsedValues.ContainsKey(destination);
+			return hasKey ? (this.ParsedValues[destination] != null) : false;
+		}
+
 		/// <summary>
 		/// Gets the value of the parsed argument.
 		/// </summary>
@@ -122,7 +128,7 @@ namespace System.CommandLine
 			// Checks if there is a parsed value for the specified destination, if not, an exception is thrown
 			if (!this.ParsedValues.ContainsKey(destination))
 				throw new KeyNotFoundException($"There is no parsed value for the destination {destination}.");
-
+			//throw new InvalidCastException
 			// Returns the parsed value for the specified destination
 			return this.ParsedValues[destination];
 		}

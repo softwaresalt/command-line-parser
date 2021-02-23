@@ -5,7 +5,7 @@ namespace System.CommandLine.Arguments
 	/// They are not optional and must be at the beginning of the command line arguments in exactly the same order as they were declared.
 	/// </summary>
 	/// <typeparam name="T">The type of the positional argument.</param>
-	public class PositionalArgument<T> : Argument
+	public sealed class PositionalArgument<T> : Argument
 	{
 		#region Constructors
 
@@ -18,7 +18,7 @@ namespace System.CommandLine.Arguments
 		/// </param>
 		/// <param name="help">A descriptive help text for the argument, which is used in the help string.</param>
 		/// <exception cref="ArgumentNullException">If either the name or the destination are <c>null</c>, empty, or only consist of white spaces then an <see cref="ArgumentNullException"/> is thrown.</exception>
-		public PositionalArgument(string name, string destination, string help) : this(name, name, destination, help) { }
+		internal PositionalArgument(string name, string destination, string help) : this(name, name, destination, help) { }
 
 		/// <summary>
 		/// Initializes a new <see cref="PositionalArgument"/> instance.
@@ -30,7 +30,7 @@ namespace System.CommandLine.Arguments
 		/// </param>
 		/// <param name="help">A descriptive help text for the argument, which is used in the help string.</param>
 		/// <exception cref="ArgumentNullException">If either the name or the destination are <c>null</c>, empty, or only consist of white spaces then an <see cref="ArgumentNullException"/> is thrown.</exception>
-		public PositionalArgument(string name, string alias, string destination, string help)
+		internal PositionalArgument(string name, string alias, string destination, string help)
 		{
 			// Validates the arguments
 			if (string.IsNullOrWhiteSpace(name))

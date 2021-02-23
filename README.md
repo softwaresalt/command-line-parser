@@ -33,6 +33,12 @@ using System.CommandLine;
 
 Parser parser = new Parser();
 ```
+## Building the Documentation
+1. Install [doxygen](https://www.doxygen.nl/download.html).
+1. Add doxygen.exe to the command-line path.
+1. Select BuildDoc.bat in Solution Explorer, then Alt+Space (opens command window to file location).
+1. In the command window, run ```refreshenv```
+1. Run BuildDoc.bat just run ```doxygen .\docs\Doxyfile```
 
 ## Contributions
 

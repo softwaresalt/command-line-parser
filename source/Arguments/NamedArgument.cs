@@ -10,7 +10,7 @@ namespace System.CommandLine.Arguments
 	/// Represents a single named argument of a command line parser. A named argument is a command line argument that is comprised of a name and an explicit value.
 	/// </summary>
 	/// <typeparam name="T">The type of the argument.</param>
-	public class NamedArgument<T> : Argument
+	public sealed class NamedArgument<T> : Argument
 	{
 		#region Constructors
 
@@ -24,7 +24,7 @@ namespace System.CommandLine.Arguments
 		/// <param name="defaultValue">The value that the argument receives if it was not detected by the parser.</param>
 		/// <param name="duplicateResolutionPolicy">A callback function, which is invoked when the same argument was specified more than once.</param>
 		/// <exception cref="ArgumentNullException">If either the name or the destination are <c>null</c>, empty, or only consist of white spaces, then an <see cref="ArgumentNullException"/> is thrown.</exception>
-		public NamedArgument(string name, string alias, string destination, string help, T defaultValue, Func<T, T, T> duplicateResolutionPolicy)
+		internal NamedArgument(string name, string alias, string destination, string help, T defaultValue, Func<T, T, T> duplicateResolutionPolicy)
 		{
 			// Validates the arguments
 			if (string.IsNullOrWhiteSpace(name))

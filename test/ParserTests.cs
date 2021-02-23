@@ -1,5 +1,6 @@
 #region Using Directives
 
+using System.CommandLine.Arguments;
 using System.Collections.Generic;
 using System.Text;
 using Xunit;
@@ -97,13 +98,15 @@ namespace System.CommandLine.Tests
 		{
 			// Sets up the parser
 			Parser parser = new Parser();
-			parser.AddPositionalArgument<string>("file-name");
+			PositionalArgument<string> fileName = parser.CreatePositionalArgument<string>("file-name");
+			parser.AddPositionalArgument(fileName);
 
 			// Parses the command line arguments
 			ParsingResults parsingResults = parser.Parse(new string[] { "test.exe", @"C:\test" });
 
 			// Validates that the parsed values are correct
-			Assert.Equal(@"C:\test", parsingResults.GetParsedValue<string>("FileName"));
+			Assert.True(parsingResults.HasParsedValue(fileName.Destination));
+			Assert.Equal(@"C:\test", parsingResults.GetParsedValue<string>(fileName.Destination));
 		}
 
 		/// <summary>
@@ -129,6 +132,35 @@ namespace System.CommandLine.Tests
 		}
 
 		/// <summary>
+		/// Tests whether the parser can handle multiple positional arguments.
+		/// </summary>
+		[Fact]
+		public void TestMultiplePositionalArgument2()
+		{
+			// Sets up the parser
+			Parser parser = new Parser();
+			PositionalArgument<string> fileName = parser.CreatePositionalArgument<string>("file-name");
+			PositionalArgument<double> factor = parser.CreatePositionalArgument<double>("factor");
+			PositionalArgument<DayOfWeek> dayofweek = parser.CreatePositionalArgument<DayOfWeek>("day-of-week");
+
+			parser
+					.AddPositionalArgument(fileName)
+					.AddPositionalArgument(factor)
+					.AddPositionalArgument(dayofweek);
+
+			// Parses the command line arguments
+			ParsingResults parsingResults = parser.Parse(new string[] { "test.exe", @"C:\test", "8.45e9", "friday" });
+
+			// Validates that the parsed values are correct
+			Assert.True(parsingResults.HasParsedValue(fileName.Destination));
+			Assert.Equal(@"C:\test", parsingResults.GetParsedValue<string>(fileName.Destination));
+			Assert.True(parsingResults.HasParsedValue(factor.Destination));
+			Assert.Equal(8.45e9, parsingResults.GetParsedValue<double>(factor.Destination));
+			Assert.True(parsingResults.HasParsedValue(dayofweek.Destination));
+			Assert.Equal(DayOfWeek.Friday, parsingResults.GetParsedValue<DayOfWeek>(dayofweek.Destination));
+		}
+
+		/// <summary>
 		/// Tests how the parser handles if a position argument is missing.
 		/// </summary>
 		[Fact]
@@ -145,17 +177,31 @@ namespace System.CommandLine.Tests
 		}
 
 		/// <summary>
+		/// Tests how the parser handles if a position argument is missing.
+		/// </summary>
+		[Fact]
+		public void TestMissingPositionalArguments2()
+		{
+			// Sets up the parser
+			Parser parser = new Parser();
+			PositionalArgument<string> fileName = parser.CreatePositionalArgument<string>("file-name");
+			PositionalArgument<double> factor = parser.CreatePositionalArgument<double>("factor");
+			parser
+					.AddPositionalArgument(fileName)
+					.AddPositionalArgument(factor);
+
+			// Parses the command line arguments, since there are two positional arguments declared and only one value was supplied, an exception should be raised
+			Assert.Throws<InvalidOperationException>(() => parser.Parse(new string[] { "test.exe", @"C:\test" }));
+		}
+
+		/// <summary>
 		/// Tests whether the parser can handle one named argument.
 		/// </summary>
 		[Fact]
 		public void TestOneNamedArgument()
 		{
 			// Sets up the parser
-			Parser parser = new Parser(new ParserOptions
-			{
-				ArgumentPrefix = "--",
-				ArgumentAliasPrefix = "-"
-			});
+			Parser parser = new Parser(new ParserOptions("--", "-"));
 			parser.AddNamedArgument<string>("file-name", "f");
 
 			// Parses the command line arguments
@@ -208,11 +254,7 @@ namespace System.CommandLine.Tests
 		public void TestNamedArgumentDefaultValues()
 		{
 			// Sets up the parser
-			Parser parser = new Parser(new ParserOptions
-			{
-				ArgumentPrefix = "--",
-				ArgumentAliasPrefix = "-"
-			});
+			Parser parser = new Parser(new ParserOptions("--", "-"));
 			parser
 					.AddNamedArgument<bool>("feature", "f", "Feature", null, true)
 					.AddNamedArgument<int>("number-of-iterations", "i", "NumberOfIterations", null, 123)
@@ -236,17 +278,54 @@ namespace System.CommandLine.Tests
 		}
 
 		/// <summary>
+		/// Tests whether the parser correctly handles default values.
+		/// </summary>
+		[Fact]
+		public void TestNamedArgumentDefaultValues2()
+		{
+			// Sets up the parser
+			Parser parser = new Parser(new ParserOptions("--", "-"));
+			NamedArgument<bool> feature = parser.CreateNamedArgument<bool>("feature", "f", "Feature", null, true);
+			NamedArgument<int> iterations = parser.CreateNamedArgument<int>("number-of-iterations", "i", "NumberOfIterations", null, 123);
+			NamedArgument<DayOfWeek> dayofweek = parser.CreateNamedArgument<DayOfWeek>("day-of-week", "d", "DayOfWeek");
+
+			parser
+					.AddNamedArgument(feature)
+					.AddNamedArgument(iterations)
+					.AddNamedArgument(dayofweek);
+
+			// Parses the command line arguments
+			ParsingResults firstParsingResults = parser.Parse(new string[] { "test.exe" });
+			ParsingResults secondParsingResults = parser.Parse(new string[] { "test.exe", "--number-of-iterations", "72" });
+			ParsingResults thirdParsingResults = parser.Parse(new string[] { "test.exe", "--feature", "false", "-i", "72", "-d", "wednesday" });
+
+			// Validates that the parsed values are correct
+			Assert.True(firstParsingResults.HasParsedValue(feature.Destination));
+			Assert.True(firstParsingResults.GetParsedValue<bool>(feature.Destination));
+			Assert.Equal(123, firstParsingResults.GetParsedValue<int>(iterations.Destination));
+			Assert.Equal(DayOfWeek.Sunday, firstParsingResults.GetParsedValue<DayOfWeek>(dayofweek.Destination));
+			Assert.True(secondParsingResults.HasParsedValue(feature.Destination));
+			Assert.True(secondParsingResults.GetParsedValue<bool>(feature.Destination));
+			Assert.True(secondParsingResults.HasParsedValue(iterations.Destination));
+			Assert.Equal(72, secondParsingResults.GetParsedValue<int>(iterations.Destination));
+			Assert.True(secondParsingResults.HasParsedValue(dayofweek.Destination));
+			Assert.Equal(DayOfWeek.Sunday, secondParsingResults.GetParsedValue<DayOfWeek>(dayofweek.Destination));
+			Assert.False(thirdParsingResults.GetParsedValue<bool>(feature.Destination));
+			Assert.True(thirdParsingResults.HasParsedValue(feature.Destination));
+			Assert.True(thirdParsingResults.HasParsedValue(iterations.Destination));
+			Assert.True(thirdParsingResults.HasParsedValue(dayofweek.Destination));
+			Assert.Equal(72, thirdParsingResults.GetParsedValue<int>(iterations.Destination));
+			Assert.Equal(DayOfWeek.Wednesday, thirdParsingResults.GetParsedValue<DayOfWeek>(dayofweek.Destination));
+		}
+
+		/// <summary>
 		/// Tests whether the parser can handle one flag argument.
 		/// </summary>
 		[Fact]
 		public void TestOneFlagArgument()
 		{
 			// Sets up the parser
-			Parser parser = new Parser(new ParserOptions
-			{
-				ArgumentPrefix = "--",
-				ArgumentAliasPrefix = "-"
-			});
+			Parser parser = new Parser(new ParserOptions("--", "-"));
 			parser.AddFlagArgument<int>("number", "n");
 
 			// Parses the command line arguments
@@ -263,6 +342,34 @@ namespace System.CommandLine.Tests
 		}
 
 		/// <summary>
+		/// Tests whether the parser can handle one flag argument.
+		/// </summary>
+		[Fact]
+		public void TestOneFlagArgument2()
+		{
+			// Sets up the parser
+			Parser parser = new Parser(new ParserOptions("--", "-"));
+			FlagArgument<int> flagNum = parser.CreateFlagArgument<int>("number", "n");
+			parser.AddFlagArgument<int>(flagNum);
+
+			// Parses the command line arguments
+			ParsingResults firstParsingResults = parser.Parse(new string[] { "test.exe" });
+			ParsingResults secondParsingResults = parser.Parse(new string[] { "test.exe", "--number" });
+			ParsingResults thirdParsingResults = parser.Parse(new string[] { "test.exe", "--number", "--number" });
+			ParsingResults fourthParsingResults = parser.Parse(new string[] { "test.exe", "-n", "-n", "-n" });
+
+			// Validates that the parsed values are correct
+			Assert.True(firstParsingResults.HasParsedValue(flagNum.Destination));
+			Assert.Equal(0, firstParsingResults.GetParsedValue<int>(flagNum.Destination));
+			Assert.True(secondParsingResults.HasParsedValue(flagNum.Destination));
+			Assert.Equal(1, secondParsingResults.GetParsedValue<int>(flagNum.Destination));
+			Assert.True(thirdParsingResults.HasParsedValue(flagNum.Destination));
+			Assert.Equal(2, thirdParsingResults.GetParsedValue<int>(flagNum.Destination));
+			Assert.True(fourthParsingResults.HasParsedValue(flagNum.Destination));
+			Assert.Equal(3, fourthParsingResults.GetParsedValue<int>(flagNum.Destination));
+		}
+
+		/// <summary>
 		/// Tests whether the parser can handle multiple flag arguments.
 		/// </summary>
 		[Fact]
@@ -276,6 +383,36 @@ namespace System.CommandLine.Tests
 			});
 			parser.AddFlagArgument<DayOfWeek>("day", "d");
 			parser.AddFlagArgument<bool>("verbose", "v");
+
+			// Parses the command line arguments
+			ParsingResults firstParsingResults = parser.Parse(new string[] { "test.exe" });
+			ParsingResults secondParsingResults = parser.Parse(new string[] { "test.exe", "--verbose", "--day" });
+			ParsingResults thirdParsingResults = parser.Parse(new string[] { "test.exe", "--day", "--day" });
+			ParsingResults fourthParsingResults = parser.Parse(new string[] { "test.exe", "-d", "-v", "-d", "-v", "-d" });
+
+			// Validates that the parsed values are correct
+			Assert.Equal(DayOfWeek.Sunday, firstParsingResults.GetParsedValue<DayOfWeek>("Day"));
+			Assert.False(firstParsingResults.GetParsedValue<bool>("Verbose"));
+			Assert.Equal(DayOfWeek.Monday, secondParsingResults.GetParsedValue<DayOfWeek>("Day"));
+			Assert.True(secondParsingResults.GetParsedValue<bool>("Verbose"));
+			Assert.Equal(DayOfWeek.Tuesday, thirdParsingResults.GetParsedValue<DayOfWeek>("Day"));
+			Assert.False(thirdParsingResults.GetParsedValue<bool>("Verbose"));
+			Assert.Equal(DayOfWeek.Wednesday, fourthParsingResults.GetParsedValue<DayOfWeek>("Day"));
+			Assert.True(fourthParsingResults.GetParsedValue<bool>("Verbose"));
+		}
+
+		/// <summary>
+		/// Tests whether the parser can handle multiple flag arguments.
+		/// </summary>
+		[Fact]
+		public void TestMultipleFlagArgument2()
+		{
+			// Sets up the parser
+			Parser parser = new Parser(new ParserOptions("--", "-"));
+			FlagArgument<DayOfWeek> dow = parser.CreateFlagArgument<DayOfWeek>("day", "d");
+			FlagArgument<bool> v = parser.CreateFlagArgument<bool>("verbose", "v");
+			parser.AddFlagArgument(dow);
+			parser.AddFlagArgument(v);
 
 			// Parses the command line arguments
 			ParsingResults firstParsingResults = parser.Parse(new string[] { "test.exe" });
@@ -337,6 +474,52 @@ namespace System.CommandLine.Tests
 		}
 
 		/// <summary>
+		/// Tests how the parser handles multi-character flags.
+		/// </summary>
+		[Fact]
+		public void TestMultiCharacterFlagArguments2()
+		{
+			// Sets up the parser
+			Parser parser = new Parser(new ParserOptions("--", "-"));
+			FlagArgument<VerbosityLevel> verbosity = parser.CreateFlagArgument<VerbosityLevel>("verbosity", "v");
+			FlagArgument<int> count = parser.CreateFlagArgument<int>("count", "c");
+			FlagArgument<bool> activate = parser.CreateFlagArgument<bool>("activate", "a");
+			parser.AddFlagArgument(verbosity).AddFlagArgument(count).AddFlagArgument(activate);
+
+			// Parses the command line arguments
+			ParsingResults firstParsingResults = parser.Parse(new string[] { "test.exe" });
+			ParsingResults secondParsingResults = parser.Parse(new string[] { "test.exe", "-vca" });
+			ParsingResults thirdParsingResults = parser.Parse(new string[] { "test.exe", "-vvv", "-ccc", "-aaa" });
+			ParsingResults fourthParsingResults = parser.Parse(new string[] { "test.exe", "-vvvcccaaa" });
+
+			// Validates that the parsed values are correct
+			Assert.True(firstParsingResults.HasParsedValue(verbosity.Destination));
+			Assert.Equal(VerbosityLevel.Quiet, firstParsingResults.GetParsedValue<VerbosityLevel>(verbosity.Destination));
+			Assert.True(firstParsingResults.HasParsedValue(count.Destination));
+			Assert.Equal(0, firstParsingResults.GetParsedValue<int>(count.Destination));
+			Assert.True(firstParsingResults.HasParsedValue(activate.Destination));
+			Assert.False(firstParsingResults.GetParsedValue<bool>(activate.Destination));
+			Assert.True(secondParsingResults.HasParsedValue(verbosity.Destination));
+			Assert.Equal(VerbosityLevel.Minimal, secondParsingResults.GetParsedValue<VerbosityLevel>(verbosity.Destination));
+			Assert.True(secondParsingResults.HasParsedValue(count.Destination));
+			Assert.Equal(1, secondParsingResults.GetParsedValue<int>(count.Destination));
+			Assert.True(secondParsingResults.HasParsedValue(activate.Destination));
+			Assert.True(secondParsingResults.GetParsedValue<bool>(activate.Destination));
+			Assert.True(thirdParsingResults.HasParsedValue(verbosity.Destination));
+			Assert.Equal(VerbosityLevel.Detailed, thirdParsingResults.GetParsedValue<VerbosityLevel>(verbosity.Destination));
+			Assert.True(thirdParsingResults.HasParsedValue(count.Destination));
+			Assert.Equal(3, thirdParsingResults.GetParsedValue<int>(count.Destination));
+			Assert.True(thirdParsingResults.HasParsedValue(activate.Destination));
+			Assert.True(thirdParsingResults.GetParsedValue<bool>(activate.Destination));
+			Assert.True(fourthParsingResults.HasParsedValue(verbosity.Destination));
+			Assert.Equal(VerbosityLevel.Detailed, fourthParsingResults.GetParsedValue<VerbosityLevel>(verbosity.Destination));
+			Assert.True(fourthParsingResults.HasParsedValue(count.Destination));
+			Assert.Equal(3, fourthParsingResults.GetParsedValue<int>(count.Destination));
+			Assert.True(fourthParsingResults.HasParsedValue(activate.Destination));
+			Assert.True(fourthParsingResults.GetParsedValue<bool>(activate.Destination));
+		}
+
+		/// <summary>
 		/// Tests how the parser handles a situation where it parses a named argument that was not declared.
 		/// </summary>
 		[Fact]
@@ -351,6 +534,22 @@ namespace System.CommandLine.Tests
 			parser
 					.AddNamedArgument<bool>("feature", "f")
 					.AddNamedArgument<int>("number-of-iterations", "i");
+
+			// Parses the command line arguments, since there is are only two named arguments declared but three are supplied, an exception should be raised
+			Assert.Throws<InvalidOperationException>(() => parser.Parse(new string[] { "test.exe", "--feature", "on", "--number-of-iterations", "72", "--day-of-week", "wednesday" }));
+		}
+
+		/// <summary>
+		/// Tests how the parser handles a situation where it parses a named argument that was not declared.
+		/// </summary>
+		[Fact]
+		public void TestUnknownNamedArgument2()
+		{
+			// Sets up the parser
+			Parser parser = new Parser(new ParserOptions("--", "-"));
+			parser
+					.AddNamedArgument(parser.CreateNamedArgument<bool>("feature", "f"))
+					.AddNamedArgument(parser.CreateNamedArgument<int>("number-of-iterations", "i"));
 
 			// Parses the command line arguments, since there is are only two named arguments declared but three are supplied, an exception should be raised
 			Assert.Throws<InvalidOperationException>(() => parser.Parse(new string[] { "test.exe", "--feature", "on", "--number-of-iterations", "72", "--day-of-week", "wednesday" }));
@@ -382,6 +581,35 @@ namespace System.CommandLine.Tests
 		}
 
 		/// <summary>
+		/// Tests how the parser handles a situation where it parses a named argument and its value is missing.
+		/// </summary>
+		[Fact]
+		public void TestMissingNamedArgumentValue2()
+		{
+			// Sets up the parser
+			Parser parser = new Parser(new ParserOptions("/", "/"));
+			NamedArgument<bool> feature = parser.CreateNamedArgument<bool>("feature", "f");
+			NamedArgument<int> iterations = parser.CreateNamedArgument<int>("number-of-iterations", "i");
+			NamedArgument<DayOfWeek> dayofweek = parser.CreateNamedArgument<DayOfWeek>("day-of-week", "d");
+
+			parser
+					.AddNamedArgument(feature)
+					.AddNamedArgument(iterations)
+					.AddNamedArgument(dayofweek);
+
+			// Parses the command line arguments, there are three declared arguments and only two are supplied, but since named arguments are optional, nothing should happen
+			ParsingResults parsingResults = parser.Parse(new string[] { "test.exe", "/feature", "yes", "/number-of-iterations", "72" });
+
+			// Validates that the parsed values are correct
+			Assert.True(parsingResults.HasParsedValue(feature.Destination));
+			Assert.True(parsingResults.GetParsedValue<bool>(feature.Destination));
+			Assert.True(parsingResults.HasParsedValue(iterations.Destination));
+			Assert.Equal(72, parsingResults.GetParsedValue<int>(iterations.Destination));
+			Assert.True(parsingResults.HasParsedValue(dayofweek.Destination));
+			Assert.Equal(DayOfWeek.Sunday, parsingResults.GetParsedValue<DayOfWeek>(dayofweek.Destination));
+		}
+
+		/// <summary>
 		/// Tests whether the parser can handle multiple positional arguments and named arguments.
 		/// </summary>
 		[Fact]
@@ -409,6 +637,43 @@ namespace System.CommandLine.Tests
 			Assert.True(parsingResults.GetParsedValue<bool>("Feature"));
 			Assert.Equal(123, parsingResults.GetParsedValue<int>("NumberOfIterations"));
 			Assert.Equal(DayOfWeek.Sunday, parsingResults.GetParsedValue<DayOfWeek>("DayOfWeek"));
+		}
+
+		/// <summary>
+		/// Tests whether the parser can handle multiple positional arguments and named arguments.
+		/// </summary>
+		[Fact]
+		public void TestPositionalAndNamedArguments2()
+		{
+			// Sets up the parser
+			Parser parser = new Parser(new ParserOptions("--", "-"));
+			PositionalArgument<string> filename = parser.CreatePositionalArgument<string>("file-name");
+			PositionalArgument<float> factor = parser.CreatePositionalArgument<float>("factor");
+
+			NamedArgument<bool> feature = parser.CreateNamedArgument<bool>("feature", "f");
+			NamedArgument<int> iterations = parser.CreateNamedArgument<int>("number-of-iterations", "i");
+			NamedArgument<DayOfWeek> dayofweek = parser.CreateNamedArgument<DayOfWeek>("day-of-week", "d");
+			parser
+					.AddPositionalArgument(filename)
+					.AddPositionalArgument(factor)
+					.AddNamedArgument(feature)
+					.AddNamedArgument(iterations)
+					.AddNamedArgument(dayofweek);
+
+			// Parses the command line arguments
+			ParsingResults parsingResults = parser.Parse(new string[] { "test.exe", "/home/test.txt", "123.5", "-f", "true", "--number-of-iterations", "123", "-d", "Sunday" });
+
+			// Validates that the parsed values are correct
+			Assert.True(parsingResults.HasParsedValue(filename.Destination));
+			Assert.Equal("/home/test.txt", parsingResults.GetParsedValue<string>(filename.Destination));
+			Assert.True(parsingResults.HasParsedValue(factor.Destination));
+			Assert.Equal(123.5, parsingResults.GetParsedValue<float>(factor.Destination));
+			Assert.True(parsingResults.HasParsedValue(feature.Destination));
+			Assert.True(parsingResults.GetParsedValue<bool>(feature.Destination));
+			Assert.True(parsingResults.HasParsedValue(iterations.Destination));
+			Assert.Equal(123, parsingResults.GetParsedValue<int>(iterations.Destination));
+			Assert.True(parsingResults.HasParsedValue(dayofweek.Destination));
+			Assert.Equal(DayOfWeek.Sunday, parsingResults.GetParsedValue<DayOfWeek>(dayofweek.Destination));
 		}
 
 		/// <summary>
@@ -504,6 +769,93 @@ namespace System.CommandLine.Tests
 		}
 
 		/// <summary>
+		/// Tests how the parser handles different prefix styles (e.g. the UNIX "--" style and the Windows "/" style).
+		/// </summary>
+		[Fact]
+		public void TestArgumentPrefixStyles2()
+		{
+			// Sets up the parser with the usual UNIX style argument prefixes
+			Parser parser = new Parser(new ParserOptions("--", "-"));
+			NamedArgument<bool> feature = parser.CreateNamedArgument<bool>("feature", "f");
+			NamedArgument<int> iterations = parser.CreateNamedArgument<int>("number-of-iterations", "i");
+			parser
+					.AddNamedArgument(feature)
+					.AddNamedArgument(iterations);
+
+			// Parses the command line arguments with the UNIX style argument prefixes
+			ParsingResults parsingResults = parser.Parse(new string[] { "test.exe", "--feature", "off", "-i", "987" });
+
+			// Validates that the parsed values with the UNIX style argument prefixes are correct
+			Assert.True(parsingResults.HasParsedValue(feature.Destination));
+			Assert.False(parsingResults.GetParsedValue<bool>(feature.Destination));
+			Assert.True(parsingResults.HasParsedValue(iterations.Destination));
+			Assert.Equal(987, parsingResults.GetParsedValue<int>(iterations.Destination));
+
+			// Sets up the parser with the usual Windows style argument prefixes
+			parser = new Parser(new ParserOptions("/", "/"));
+			parser
+					.AddNamedArgument(feature)
+					.AddNamedArgument(iterations);
+
+			// Parses the command line arguments with the Windows style argument prefixes
+			parsingResults = parser.Parse(new string[] { "test.exe", "/feature", "off", "/i", "987" });
+
+			// Validates that the parsed values with the Windows style argument prefixes are correct
+			Assert.True(parsingResults.HasParsedValue(feature.Destination));
+			Assert.False(parsingResults.GetParsedValue<bool>(feature.Destination));
+			Assert.True(parsingResults.HasParsedValue(iterations.Destination));
+			Assert.Equal(987, parsingResults.GetParsedValue<int>(iterations.Destination));
+
+			// Sets up the parser with some non-standard argument prefixes, with different prefixes for arguments and their aliases
+			parser = new Parser(new ParserOptions("@", "&"));
+
+			parser
+					.AddNamedArgument(feature)
+					.AddNamedArgument(iterations);
+
+			// Parses the command line arguments with non-standard argument prefixes
+			parsingResults = parser.Parse(new string[] { "test.exe", "@feature", "off", "&i", "987" });
+
+			// Validates that the parsed values with non-standard argument prefixes are correct
+			Assert.True(parsingResults.HasParsedValue(feature.Destination));
+			Assert.False(parsingResults.GetParsedValue<bool>(feature.Destination));
+			Assert.True(parsingResults.HasParsedValue(iterations.Destination));
+			Assert.Equal(987, parsingResults.GetParsedValue<int>(iterations.Destination));
+
+			// Sets up the parser with some non-standard argument prefixes, with the same prefixes for arguments and their aliases
+			parser = new Parser(new ParserOptions("=", "="));
+
+			parser
+					.AddNamedArgument(feature)
+					.AddNamedArgument(iterations);
+
+			// Parses the command line arguments with non-standard argument prefixes
+			parsingResults = parser.Parse(new string[] { "test.exe", "=feature", "off", "=i", "987" });
+
+			// Validates that the parsed values with non-standard argument prefixes are correct
+			Assert.True(parsingResults.HasParsedValue(feature.Destination));
+			Assert.False(parsingResults.GetParsedValue<bool>(feature.Destination));
+			Assert.True(parsingResults.HasParsedValue(iterations.Destination));
+			Assert.Equal(987, parsingResults.GetParsedValue<int>(iterations.Destination));
+
+			// Sets up the parser with switched UNIX style argument prefixes
+			parser = new Parser(new ParserOptions("-", "--"));
+
+			parser
+					.AddNamedArgument(feature)
+					.AddNamedArgument(iterations);
+
+			// Parses the command line arguments with the switched UNIX style argument prefixes
+			parsingResults = parser.Parse(new string[] { "test.exe", "-feature", "off", "--i", "987" });
+
+			// Validates that the parsed values with the switched UNIX style argument prefixes are correct
+			Assert.True(parsingResults.HasParsedValue(feature.Destination));
+			Assert.False(parsingResults.GetParsedValue<bool>(feature.Destination));
+			Assert.True(parsingResults.HasParsedValue(iterations.Destination));
+			Assert.Equal(987, parsingResults.GetParsedValue<int>(iterations.Destination));
+		}
+
+		/// <summary>
 		/// Tests how the parser handles named arguments that are using the key value separator syntax (e.g. "--age=18" instead of "--age 18").
 		/// </summary>
 		[Fact]
@@ -547,17 +899,57 @@ namespace System.CommandLine.Tests
 		}
 
 		/// <summary>
+		/// Tests how the parser handles named arguments that are using the key value separator syntax (e.g. "--age=18" instead of "--age 18").
+		/// </summary>
+		[Fact]
+		public void TestKeyValueSeparator2()
+		{
+			// Sets up the parser
+			Parser unixStyleParser = new Parser(new ParserOptions("--", "-", "="));
+			NamedArgument<bool> feature = unixStyleParser.CreateNamedArgument<bool>("feature", "f");
+			NamedArgument<int> iterations = unixStyleParser.CreateNamedArgument<int>("number-of-iterations", "i");
+
+			unixStyleParser
+					.AddNamedArgument(feature)
+					.AddNamedArgument(iterations);
+			Parser windowsStyleParser = new Parser(new ParserOptions("/", "/", ":"));
+			windowsStyleParser
+					.AddNamedArgument(feature)
+					.AddNamedArgument(iterations);
+
+			// Parses the command line arguments
+			ParsingResults firstUnixStyleParsingResults = unixStyleParser.Parse(new string[] { "test.exe", "--feature=true", "-i=34" });
+			ParsingResults secondUnixStyleParsingResults = unixStyleParser.Parse(new string[] { "test.exe", "-f", "off", "--number-of-iterations", "78" });
+			ParsingResults firstWindowStyleParsingResults = windowsStyleParser.Parse(new string[] { "test.exe", "/feature:no", "/i:49" });
+			ParsingResults secondWindowsStyleParsingResults = windowsStyleParser.Parse(new string[] { "test.exe", "/f", "yes", "/number-of-iterations", "20" });
+
+			// Validates that the parsed values are correct
+			Assert.True(firstUnixStyleParsingResults.HasParsedValue(feature.Destination));
+			Assert.True(firstUnixStyleParsingResults.GetParsedValue<bool>(feature.Destination));
+			Assert.True(firstUnixStyleParsingResults.HasParsedValue(iterations.Destination));
+			Assert.Equal(34, firstUnixStyleParsingResults.GetParsedValue<int>(iterations.Destination));
+			Assert.True(secondUnixStyleParsingResults.HasParsedValue(feature.Destination));
+			Assert.False(secondUnixStyleParsingResults.GetParsedValue<bool>(feature.Destination));
+			Assert.True(secondUnixStyleParsingResults.HasParsedValue(iterations.Destination));
+			Assert.Equal(78, secondUnixStyleParsingResults.GetParsedValue<int>(iterations.Destination));
+			Assert.True(firstWindowStyleParsingResults.HasParsedValue(feature.Destination));
+			Assert.False(firstWindowStyleParsingResults.GetParsedValue<bool>(feature.Destination));
+			Assert.True(firstWindowStyleParsingResults.HasParsedValue(iterations.Destination));
+			Assert.Equal(49, firstWindowStyleParsingResults.GetParsedValue<int>(iterations.Destination));
+			Assert.True(secondWindowsStyleParsingResults.HasParsedValue(feature.Destination));
+			Assert.True(secondWindowsStyleParsingResults.GetParsedValue<bool>(feature.Destination));
+			Assert.True(secondWindowsStyleParsingResults.HasParsedValue(iterations.Destination));
+			Assert.Equal(20, secondWindowsStyleParsingResults.GetParsedValue<int>(iterations.Destination));
+		}
+
+		/// <summary>
 		/// Tests how the parser handles the parsing of arguments of a collection type and especially how it handles a situation where a single named argument is provided multiple times.
 		/// </summary>
 		[Fact]
 		public void TestCollectionArguments()
 		{
 			// Sets up the parser
-			Parser parser = new Parser(new ParserOptions
-			{
-				ArgumentPrefix = "--",
-				ArgumentAliasPrefix = "-"
-			});
+			Parser parser = new Parser(new ParserOptions("--", "-"));
 			parser.AddNamedArgument<List<string>>("names", "n");
 			parser.AddNamedArgument<string>("car", "c");
 
@@ -573,17 +965,41 @@ namespace System.CommandLine.Tests
 		}
 
 		/// <summary>
+		/// Tests how the parser handles the parsing of arguments of a collection type and especially how it handles a situation where a single named argument is provided multiple times.
+		/// </summary>
+		[Fact]
+		public void TestCollectionArguments2()
+		{
+			// Sets up the parser
+			Parser parser = new Parser(new ParserOptions("--", "-"));
+			NamedArgument<List<string>> names = parser.CreateNamedArgument<List<string>>("names", "n");
+			NamedArgument<string> car = parser.CreateNamedArgument<string>("car", "c");
+			parser.AddNamedArgument(names);
+			parser.AddNamedArgument(car);
+
+			// Parses the command line arguments
+			ParsingResults firstParsingResults = parser.Parse(new string[] { "test.exe", "--names", "Alice", "-n", "Bob", "--car", "blue car", "--names", "Eve" });
+			ParsingResults secondParsingResults = parser.Parse(new string[] { "test.exe", "-n", "Alice", "Bob", "Eve", "-c", "red car" });
+
+			// Validates that the parsed values are correct
+			Assert.True(firstParsingResults.HasParsedValue(names.Destination));
+			Assert.Equal(new List<string> { "Alice", "Bob", "Eve" }, firstParsingResults.GetParsedValue<List<string>>(names.Destination));
+			Assert.True(firstParsingResults.HasParsedValue(car.Destination));
+			Assert.Equal("blue car", firstParsingResults.GetParsedValue<string>(car.Destination));
+			Assert.True(secondParsingResults.HasParsedValue(names.Destination));
+			Assert.Equal(new List<string> { "Alice", "Bob", "Eve" }, secondParsingResults.GetParsedValue<List<string>>(names.Destination));
+			Assert.True(secondParsingResults.HasParsedValue(car.Destination));
+			Assert.Equal("red car", secondParsingResults.GetParsedValue<string>(car.Destination));
+		}
+
+		/// <summary>
 		/// Tests whether the default duplicate resolution policy works, which is used if a single named argument is provided more than once.
 		/// </summary>
 		[Fact]
 		public void TestDuplicateResolutionPolicy()
 		{
 			// Sets up the parser
-			Parser parser = new Parser(new ParserOptions
-			{
-				ArgumentPrefix = "--",
-				ArgumentAliasPrefix = "-"
-			});
+			Parser parser = new Parser(new ParserOptions("--", "-"));
 			parser.AddNamedArgument<int>("age", "a");
 
 			// Parses the command line arguments
@@ -594,17 +1010,32 @@ namespace System.CommandLine.Tests
 		}
 
 		/// <summary>
+		/// Tests whether the default duplicate resolution policy works, which is used if a single named argument is provided more than once.
+		/// </summary>
+		[Fact]
+		public void TestDuplicateResolutionPolicy2()
+		{
+			// Sets up the parser
+			Parser parser = new Parser(new ParserOptions("--", "-"));
+			NamedArgument<int> age = parser.CreateNamedArgument<int>("age", "a");
+			parser.AddNamedArgument(age);
+
+			// Parses the command line arguments
+			ParsingResults parsingResults = parser.Parse(new string[] { "test.exe", "--age", "18", "-a", "17", "--age", "16" });
+
+			// Validates that the parsed values are correct
+			Assert.True(parsingResults.HasParsedValue(age.Destination));
+			Assert.Equal(16, parsingResults.GetParsedValue<int>(age.Destination));
+		}
+
+		/// <summary>
 		/// Tests whether a custom duplicate resolution policy works, which is used if a single named argument is provided more than once.
 		/// </summary>
 		[Fact]
 		public void TestCustomDuplicateResolutionPolicy()
 		{
 			// Sets up the parser
-			Parser parser = new Parser(new ParserOptions
-			{
-				ArgumentPrefix = "--",
-				ArgumentAliasPrefix = "-"
-			});
+			Parser parser = new Parser(new ParserOptions("--", "-"));
 			parser.AddNamedArgument<int>("add", "a", "Add", "Adds numbers together", 0, (a, b) => a + b);
 			parser.AddNamedArgument<int>("multiply", "m", "Multiply", "Multiplies numbers together", 0, (a, b) => a * b);
 
@@ -618,17 +1049,38 @@ namespace System.CommandLine.Tests
 		}
 
 		/// <summary>
+		/// Tests whether a custom duplicate resolution policy works, which is used if a single named argument is provided more than once.
+		/// </summary>
+		[Fact]
+		public void TestCustomDuplicateResolutionPolicy2()
+		{
+			// Sets up the parser
+			Parser parser = new Parser(new ParserOptions("--", "-"));
+			NamedArgument<int> add = parser.CreateNamedArgument<int>("add", "a", "Add", "Adds numbers together", 0, (a, b) => a + b);
+			NamedArgument<int> multiply = parser.CreateNamedArgument<int>("multiply", "m", "Multiply", "Multiplies numbers together", 0, (a, b) => a * b);
+
+			parser.AddNamedArgument(add);
+			parser.AddNamedArgument(multiply);
+
+			// Parses the command line arguments
+			ParsingResults firstParsingResults = parser.Parse(new string[] { "test.exe", "--add", "1", "-a", "2", "--add", "3" });
+			ParsingResults secondParsingResults = parser.Parse(new string[] { "test.exe", "--multiply", "4", "5", "-m", "6" });
+
+			// Validates that the parsed values are correct
+			Assert.True(firstParsingResults.HasParsedValue(add.Destination));
+			Assert.Equal(6, firstParsingResults.GetParsedValue<int>(add.Destination));
+			Assert.True(secondParsingResults.HasParsedValue(multiply.Destination));
+			Assert.Equal(120, secondParsingResults.GetParsedValue<int>(multiply.Destination));
+		}
+
+		/// <summary>
 		/// Tests how the parser handles the parsing of a single commands.
 		/// </summary>
 		[Fact]
 		public void TestSingleCommand()
 		{
 			// Sets up the parser
-			Parser parser = new Parser(new ParserOptions
-			{
-				ArgumentPrefix = "--",
-				ArgumentAliasPrefix = "-"
-			});
+			Parser parser = new Parser(new ParserOptions("--", "-"));
 			parser.AddNamedArgument<bool>("verbose", "v");
 			Parser commandParser = parser.AddCommand("restart", "r", string.Empty);
 			commandParser.AddPositionalArgument<string>("time");
@@ -649,6 +1101,42 @@ namespace System.CommandLine.Tests
 			Assert.NotNull(thirdParsingResults.SubResults);
 			Assert.Equal("restart", thirdParsingResults.SubResults.Command);
 			Assert.Equal("later", thirdParsingResults.SubResults.GetParsedValue<string>("Time"));
+		}
+
+		/// <summary>
+		/// Tests how the parser handles the parsing of a single commands.
+		/// </summary>
+		[Fact]
+		public void TestSingleCommand2()
+		{
+			// Sets up the parser
+			Parser parser = new Parser(new ParserOptions("--", "-"));
+			NamedArgument<bool> v = parser.CreateNamedArgument<bool>("verbose", "v");
+			Command cmd = parser.CreateCommand("restart", "r", string.Empty);
+			parser.AddNamedArgument<bool>(v);
+			Parser commandParser = parser.AddCommand(cmd);
+			PositionalArgument<string> time = parser.CreatePositionalArgument<string>("time");
+			commandParser.AddPositionalArgument(time);
+
+			// Parses the command line arguments
+			ParsingResults firstParsingResults = parser.Parse(new string[] { "test.exe", "-v", "no" });
+			ParsingResults secondParsingResults = parser.Parse(new string[] { "test.exe", "restart", "now" });
+			ParsingResults thirdParsingResults = parser.Parse(new string[] { "test.exe", "--verbose", "yes", "r", "later" });
+
+			// Validates that the parsed values are correct
+			Assert.True(firstParsingResults.HasParsedValue(v.Destination));
+			Assert.False(firstParsingResults.GetParsedValue<bool>(v.Destination));
+			Assert.True(secondParsingResults.HasSubResults);
+			Assert.NotNull(secondParsingResults.SubResults);
+			Assert.Equal(cmd.Name, secondParsingResults.SubResults.Command);
+			Assert.True(secondParsingResults.SubResults.HasParsedValue(time.Destination));
+			Assert.Equal("now", secondParsingResults.SubResults.GetParsedValue<string>(time.Destination));
+			Assert.True(thirdParsingResults.HasParsedValue(v.Destination));
+			Assert.True(thirdParsingResults.GetParsedValue<bool>(v.Destination));
+			Assert.True(thirdParsingResults.HasSubResults);
+			Assert.NotNull(thirdParsingResults.SubResults);
+			Assert.Equal(cmd.Name, thirdParsingResults.SubResults.Command);
+			Assert.Equal("later", thirdParsingResults.SubResults.GetParsedValue<string>(time.Destination));
 		}
 
 		/// <summary>
@@ -676,17 +1164,39 @@ namespace System.CommandLine.Tests
 		}
 
 		/// <summary>
+		/// Tests how the parser handles the parsing of a command when having the a choice between multiple commands.
+		/// </summary>
+		[Fact]
+		public void TestMultipleCommands2()
+		{
+			// Sets up the parser
+			Parser parser = new Parser();
+			Command test = parser.CreateCommand("test", "t", string.Empty);
+			Command run = parser.CreateCommand("run", "r", string.Empty);
+			parser.AddCommand(test);
+			parser.AddCommand(run);
+
+			// Parses the command line arguments
+			ParsingResults firstParsingResults = parser.Parse(new string[] { "test.exe", "test" });
+			ParsingResults secondParsingResults = parser.Parse(new string[] { "test.exe", "t" });
+			ParsingResults thirdParsingResults = parser.Parse(new string[] { "test.exe", "run" });
+			ParsingResults fourthParsingResults = parser.Parse(new string[] { "test.exe", "r" });
+
+			// Validates that the parsed values are correct
+			Assert.Equal(test.Name, firstParsingResults.SubResults.Command);
+			Assert.Equal(test.Name, secondParsingResults.SubResults.Command);
+			Assert.Equal(run.Name, thirdParsingResults.SubResults.Command);
+			Assert.Equal(run.Name, fourthParsingResults.SubResults.Command);
+		}
+
+		/// <summary>
 		/// Tests how the parser handles the parsing of multiple nested commands.
 		/// </summary>
 		[Fact]
 		public void TestNestedCommands()
 		{
 			// Sets up the parser
-			Parser parser = new Parser(new ParserOptions
-			{
-				ArgumentPrefix = "--",
-				ArgumentAliasPrefix = "-"
-			});
+			Parser parser = new Parser(new ParserOptions("--", "-"));
 			Parser subParser = parser.AddCommand("add");
 			Parser subSubParser = subParser.AddCommand("package");
 			subSubParser.AddCommand("to-project");
@@ -717,6 +1227,47 @@ namespace System.CommandLine.Tests
 		}
 
 		/// <summary>
+		/// Tests how the parser handles the parsing of multiple nested commands.
+		/// </summary>
+		[Fact]
+		public void TestNestedCommands2()
+		{
+			// Sets up the parser
+			Parser parser = new Parser(new ParserOptions("--", "-"));
+			Command cmdAdd = parser.CreateCommand("add");
+			Parser subParser = parser.AddCommand(cmdAdd);
+			Command cmdPkg = subParser.CreateCommand("package");
+			Command cmdToProj = subParser.CreateCommand("to-project");
+			Command cmdToSol = subParser.CreateCommand("to-solution");
+			Parser subSubParser = subParser.AddCommand(cmdPkg);
+			subSubParser.AddCommand(cmdToProj);
+			subSubParser.AddCommand(cmdToSol);
+
+			// Parses the command line arguments
+			ParsingResults firstParsingResults = parser.Parse(new string[] { "test.exe" });
+			ParsingResults secondParsingResults = parser.Parse(new string[] { "test.exe", cmdAdd.Name });
+			ParsingResults thirdParsingResults = parser.Parse(new string[] { "test.exe", cmdAdd.Name, cmdPkg.Name });
+			ParsingResults fourthParsingResults = parser.Parse(new string[] { "test.exe", cmdAdd.Name, cmdPkg.Name, cmdToProj.Name });
+			ParsingResults fifthParsingResults = parser.Parse(new string[] { "test.exe", cmdAdd.Name, cmdPkg.Name, cmdToSol.Name });
+
+			// Validates that the parsed values are correct
+			Assert.False(firstParsingResults.HasSubResults);
+			Assert.Equal(cmdAdd.Name, secondParsingResults.SubResults.Command);
+			Assert.False(secondParsingResults.SubResults.HasSubResults);
+			Assert.Equal(cmdAdd.Name, thirdParsingResults.SubResults.Command);
+			Assert.Equal(cmdPkg.Name, thirdParsingResults.SubResults.SubResults.Command);
+			Assert.False(thirdParsingResults.SubResults.SubResults.HasSubResults);
+			Assert.Equal(cmdAdd.Name, fourthParsingResults.SubResults.Command);
+			Assert.Equal(cmdPkg.Name, fourthParsingResults.SubResults.SubResults.Command);
+			Assert.Equal(cmdToProj.Name, fourthParsingResults.SubResults.SubResults.SubResults.Command);
+			Assert.False(fourthParsingResults.SubResults.SubResults.SubResults.HasSubResults);
+			Assert.Equal(cmdAdd.Name, fifthParsingResults.SubResults.Command);
+			Assert.Equal(cmdPkg.Name, fifthParsingResults.SubResults.SubResults.Command);
+			Assert.Equal(cmdToSol.Name, fifthParsingResults.SubResults.SubResults.SubResults.Command);
+			Assert.False(fifthParsingResults.SubResults.SubResults.SubResults.HasSubResults);
+		}
+
+		/// <summary>
 		/// Tests how the parser handles situations where arguments have the same names or aliases as commands.
 		/// </summary>
 		[Fact]
@@ -737,6 +1288,35 @@ namespace System.CommandLine.Tests
 			Assert.True(firstParsingResults.HasSubResults);
 			Assert.Equal("test", firstParsingResults.SubResults.Command);
 			Assert.Equal("t", secondParsingResults.GetParsedValue<string>("Test"));
+			Assert.True(secondParsingResults.HasSubResults);
+			Assert.Equal("test", secondParsingResults.SubResults.Command);
+		}
+
+		/// <summary>
+		/// Tests how the parser handles situations where arguments have the same names or aliases as commands.
+		/// </summary>
+		[Fact]
+		public void TestArgumentCommandNameCollision2()
+		{
+			// Sets up the parser
+			ParserOptions options = new ParserOptions();
+			Parser parser = new Parser(options);
+			Command cmdTest = parser.CreateCommand("test", "t", string.Empty);
+			NamedArgument<string> test = parser.CreateNamedArgument<string>("test", "t");
+			parser.AddNamedArgument<string>(test);
+			parser.AddCommand(cmdTest);
+
+			// Parses the command line arguments
+			ParsingResults firstParsingResults = parser.Parse(new string[] { "test.exe", $"{options.ArgumentPrefix}test", "test", "test" });
+			ParsingResults secondParsingResults = parser.Parse(new string[] { "test.exe", $"{options.ArgumentAliasPrefix}t", "t", "t" });
+
+			// Validates that the parsed values are correct
+			Assert.True(firstParsingResults.HasParsedValue(test.Destination));
+			Assert.Equal("test", firstParsingResults.GetParsedValue<string>(test.Destination));
+			Assert.True(firstParsingResults.HasSubResults);
+			Assert.Equal("test", firstParsingResults.SubResults.Command);
+			Assert.True(secondParsingResults.HasParsedValue(test.Destination));
+			Assert.Equal(test.Alias, secondParsingResults.GetParsedValue<string>(test.Destination));
 			Assert.True(secondParsingResults.HasSubResults);
 			Assert.Equal("test", secondParsingResults.SubResults.Command);
 		}

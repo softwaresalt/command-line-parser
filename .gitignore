@@ -6,3 +6,6 @@ obj/
 *.sqlite
 /.vs/CmdLineParserCore/DesignTimeBuild/.dtbcache.v2
 /.vs/CmdLineParserCore/v16/TestStore/0
+.vs/CmdLineParserCore/v16/.suo
+/docs/html
+/docs/latex

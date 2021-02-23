@@ -3,7 +3,7 @@ namespace System.CommandLine
 	/// <summary>
 	/// Represents a command. A command is a sub-parser, which allows specialized operations to be performed.
 	/// </summary>
-	public class Command
+	public sealed class Command
 	{
 		#region Constructors
 
@@ -13,7 +13,7 @@ namespace System.CommandLine
 		/// <param name="name">The name of the command.</param>
 		/// <param name="alias">The alias of the command, which can be used as an alternative to the name.</param>
 		/// <param name="subParser">The sub-parser that is responsible for parsing the arguments of the command.</param>
-		public Command(string name, string alias, Parser subParser)
+		internal Command(string name, string alias, Parser subParser)
 		{
 			// Validates the arguments
 			if (string.IsNullOrWhiteSpace(name))
@@ -32,7 +32,7 @@ namespace System.CommandLine
 		/// </summary>
 		/// <param name="name">The name of the command.</param>
 		/// <param name="subParser">The sub-parser that is responsible for parsing the arguments of the command.</param>
-		public Command(string name, Parser subParser)
+		internal Command(string name, Parser subParser)
 				: this(name, null, subParser)
 		{ }
 
@@ -43,7 +43,7 @@ namespace System.CommandLine
 		/// <param name="alias">The alias of the command, which can be used as an alternative to the name.</param>
 		/// <param name="description">A descriptive help text for the command, which is used in the help string.</param>
 		/// <param name="parserOptions">The options of the sub-parser that is responsible for parsing the arguments of the command.<param>
-		public Command(string name, string alias, string description, ParserOptions parserOptions)
+		internal Command(string name, string alias, string description, ParserOptions parserOptions)
 				: this(name, alias, new Parser(description, parserOptions))
 		{ }
 
@@ -53,7 +53,7 @@ namespace System.CommandLine
 		/// <param name="name">The name of the command.</param>
 		/// <param name="alias">The alias of the command, which can be used as an alternative to the name.</param>
 		/// <param name="description">A descriptive help text for the command, which is used in the help string.</param>
-		public Command(string name, string alias, string description)
+		internal Command(string name, string alias, string description)
 				: this(name, alias, description, new ParserOptions())
 		{ }
 
@@ -62,7 +62,7 @@ namespace System.CommandLine
 		/// </summary>
 		/// <param name="name">The name of the command.</param>
 		/// <param name="description">A descriptive help text for the command, which is used in the help string.</param>
-		public Command(string name, string description)
+		internal Command(string name, string description)
 				: this(name, null, description, new ParserOptions())
 		{ }
 
@@ -71,7 +71,7 @@ namespace System.CommandLine
 		/// </summary>
 		/// <param name="name">The name of the command.</param>
 		/// <param name="parserOptions">The options of the sub-parser that is responsible for parsing the arguments of the command.<param>
-		public Command(string name, ParserOptions parserOptions)
+		internal Command(string name, ParserOptions parserOptions)
 				: this(name, null, null, parserOptions)
 		{ }
 
@@ -79,7 +79,7 @@ namespace System.CommandLine
 		/// Initializes a new <see cref="Command"/> instance.
 		/// </summary>
 		/// <param name="name">The name of the command.</param>
-		public Command(string name)
+		internal Command(string name)
 				: this(name, null, null, new ParserOptions())
 		{ }
 

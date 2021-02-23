@@ -1,0 +1,2 @@
+::refreshenv
+doxygen .\docs\Doxyfile

@@ -11,6 +11,16 @@ namespace System.CommandLine
 	/// </summary>
 	public class ParserOptions
 	{
+		#region Defaults
+
+		private const bool defIgnoreCase = false;
+		private static string defArgPrefix = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "/" : "--";
+		private static string defArgAliasPrefix = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "/" : "-";
+		private static string defKeyValueSeparator = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ":" : "=";
+		private static bool allowMultiCharFlags = !RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+
+		#endregion Defaults
+
 		#region Constructors
 
 		/// <summary>
@@ -19,11 +29,11 @@ namespace System.CommandLine
 		/// </summary>
 		public ParserOptions()
 				: this(
-						false,
-						RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "/" : "--",
-						RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "/" : "-",
-						RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ":" : "=",
-						!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+						defIgnoreCase,
+						defArgPrefix,
+						defArgAliasPrefix,
+						defKeyValueSeparator,
+						allowMultiCharFlags
 				)
 		{ }
 
@@ -35,10 +45,26 @@ namespace System.CommandLine
 		public ParserOptions(bool ignoreCase)
 				: this(
 						ignoreCase,
-						RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "/" : "--",
-						RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "/" : "-",
-						RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ":" : "=",
-						!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+						defArgPrefix,
+						defArgAliasPrefix,
+						defKeyValueSeparator,
+						allowMultiCharFlags
+				)
+		{ }
+
+		/// <summary>
+		/// Initializes a new <see cref="ParserOptions"/> instance.
+		/// </summary>
+		/// <param name="argumentPrefix">The prefix that is used for arguments.</param>
+		/// <param name="argumentAliasPrefix">The prefix that is used for the aliases of arguments.</param>
+		/// <param name="keyValueSeparator">The separator that separates argument keys and their values.</param>
+		public ParserOptions(string argumentPrefix, string argumentAliasPrefix)
+				: this(
+						defIgnoreCase,
+						argumentPrefix,
+						argumentAliasPrefix,
+						defKeyValueSeparator,
+						argumentPrefix != argumentAliasPrefix
 				)
 		{ }
 
@@ -50,7 +76,7 @@ namespace System.CommandLine
 		/// <param name="keyValueSeparator">The separator that separates argument keys and their values.</param>
 		public ParserOptions(string argumentPrefix, string argumentAliasPrefix, string keyValueSeparator)
 				: this(
-						false,
+						defIgnoreCase,
 						argumentPrefix,
 						argumentAliasPrefix,
 						keyValueSeparator,
@@ -121,7 +147,7 @@ namespace System.CommandLine
 		/// <summary>
 		/// Contains a value that determines whether multiple flags can be combined into a single flag.
 		/// </summary>
-		private bool allowMultiCharacterFlags;
+		private bool allowMultiCharacterFlags = (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows));
 
 		/// <summary>
 		/// Gets or sets a value that determines whether multiple flags arguments can be combined into a single flag. For example if there are two flag arguments "flag1" and "flag2" and there aliases are "a" and "b"
